@@ -14,6 +14,7 @@ ss = Seesaw(i2c_bus, addr = 0x36)
 
 def moisturesens():
     data = ss.moisture_read()
+    print("Moisture: ", data)
 
     if (data < 400):
         loop()
