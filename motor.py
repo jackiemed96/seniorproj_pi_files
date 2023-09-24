@@ -1,5 +1,6 @@
 import RPi.GPIO as GPIO
-import time, board, schedule
+import time, board, schedule, socket
+import threading
 
 from adafruit_seesaw.seesaw import Seesaw
 
@@ -12,14 +13,44 @@ Motor1E = 4 #Pin 7 on Pi
 i2c_bus = board.I2C()  # uses board.SCL and board.SDA
 ss = Seesaw(i2c_bus, addr = 0x36)
 
-def moisturesens():
-    data = ss.moisture_read()
+localAddress = ("127.0.0.1", 9999)
+bufferSize = 1024
 
-    if (data < 400):
-        loop()
+UDPClient = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+def checklevel():
+    t1 = "localcommand"
+    t1 = t1.encode("utf-8")
+    UDPClient.sendto(t1, localAddress)
+    waterlevel, address = UDPClient.recvfrom(bufferSize)
+    waterlevel = waterlevel.decode("utf-8")
+
+    print("Water level: ", waterlevel)
+
+def dontchecklevel():
+    t1 = ""
+    t1 = t1.encode("utf-8")
+    UDPClient.sendto(t1, localAddress)
+
+def moisturesens():
+    moisturedata = ss.moisture_read()
+    print("Moisture: ", moisturedata)
+
+    if (moisturedata < 400):
+        x = threading.Thread(target=checklevel, args=())
+        x.start()
+    else:
+        x = threading.Thread(target=dontchecklevel, args=())
+        x.start()
+
+    # if (moisturedata < 450):
+    #     print("Meow!")
+    
+    # if (data < 400):
+    #     loop()
 
 #schedule moisture sensor to take data every x time
-schedule.every(5).seconds.do(moisturesens)
+schedule.every(3).seconds.do(moisturesens)
 
 def setup():
     GPIO.setwarnings(False)
