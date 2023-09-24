@@ -17,17 +17,26 @@ GPIO.setup(echoPin, GPIO.IN)
 
 #Server Info
 bufferSize = 1024
+bufferSize2 = 1024
 
 serverIP = "192.168.0.90"
 serverPort = 2223
 
+localIP = "127.0.0.1"
+localPort = 9999
+
+RPIlocal = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+RPIlocal.bind((localIP, localPort))
+
 RPIserver = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 RPIserver.bind((serverIP, serverPort))
 
-print("Server up and listening . . .")
+print("Server ready to send data . . .")
 
 try:
     while (True):
+        t1, localaddress = RPIlocal.recvfrom(bufferSize2)
+        t1 = t1.decode("utf-8")
         cmd, address = RPIserver.recvfrom(bufferSize)
         cmd = cmd.decode("utf-8")
         print(cmd)
@@ -61,6 +70,13 @@ try:
             temp = round(temp, 5)
             humidity = round(humidity, 5)
             
+            #Data being set up to use in motor.py file
+            if (t1 == "localcommand"):
+                localdata = dtt
+                localdata = str(localdata)
+                localdata = localdata.encode("utf-8")
+                RPIlocal.sendto(localdata, localaddress)
+
             #Sending Data
             data = str(temp) + ':' + str(humidity) + ':' + str(dtt)
             data = data.encode("utf-8")
@@ -70,7 +86,7 @@ try:
             data = data.encode("utf-8")
             RPIserver.sendto(data, address)
             
-        time.sleep(5)
+        time.sleep(1)
         
 except KeyboardInterrupt:
     GPIO.cleanup()
