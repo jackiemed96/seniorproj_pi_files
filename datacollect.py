@@ -19,7 +19,8 @@ GPIO.setup(echoPin, GPIO.IN)
 bufferSize = 1024
 bufferSize2 = 1024
 
-serverIP = "192.168.0.90"
+#serverIP = "192.168.0.90"
+serverIP = "10.42.0.3"
 serverPort = 2223
 
 localIP = "127.0.0.1"
@@ -39,7 +40,8 @@ try:
         t1 = t1.decode("utf-8")
         cmd, address = RPIserver.recvfrom(bufferSize)
         cmd = cmd.decode("utf-8")
-        print(cmd)
+
+        print("", cmd)
         
         if (cmd == "GO"):
             #US Data Collection
@@ -86,8 +88,10 @@ try:
             data = data.encode("utf-8")
             RPIserver.sendto(data, address)
             
-        time.sleep(1)
+        time.sleep(10)
         
 except KeyboardInterrupt:
     GPIO.cleanup()
-    print("Program Exited")
+    RPIserver.close()
+    RPIlocal.close()
+    print("\nProgram Exited and sockets closed")
